@@ -1,2 +1,3 @@
 .secret_key
+.config
 *.pyc
