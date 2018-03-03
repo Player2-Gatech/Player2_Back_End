@@ -11,9 +11,19 @@ my_api = Api(app)
 class User(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
+
+        # required user parameters
         self.reqparse.add_argument('email', type=str, location='args')
         self.reqparse.add_argument('password', type=str, location='args')
+
+        # reserved for filtering GET requests only
         self.reqparse.add_argument('id', type=str, location='args')
+        self.reqparse.add_argument('likes', type=int, location='args')
+
+        # for updating (PUT doesn't exist yet)
+        self.reqparse.add_argument('display_name', type=str, location='args')
+        self.reqparse.add_argument('is_searching', type=bool, location='args')
+        self.reqparse.add_argument('bio', type=str, location='args')
 
     # registering a new user
     def post(self):
@@ -24,6 +34,7 @@ class User(Resource):
             params['email']
         )
         new_player.hash_password(params['password'])
+
         session.add(new_player)
         session.commit()
         return new_player.as_dict()
@@ -32,7 +43,7 @@ class User(Resource):
     @auth.login_required
     def get(self):
         params = self.reqparse.parse_args()
-        target_id = params['id']
+        target_id = params['user_id']
 
         # show all players if no id specified
         if target_id is None:
@@ -41,9 +52,9 @@ class User(Resource):
             return map(lambda p: p.as_dict(), all_players)
         # otherwise, show specified player
         else:
-            target_player = session.query(Player).filter_by(id = params['id']).first()
+            target_player = session.query(Player).filter_by(user_id = params['user_id']).first()
             if not target_player:
-                abort(400, "No player with id " + str(params['id']))
+                abort(400, "No player with id " + str(params['user_id']))
             return jsonify({'email': target_player.email})
 
 # Define resource-based routes here

@@ -7,10 +7,14 @@ from config import app
 Base = declarative_base()
 
 class Player(Base):
-    __tablename__ = 'player'
-    id = Column('id', Integer, primary_key=True)
-    email = Column('email', String(255))
-    password = Column('password', String(255))
+    __tablename__ = 'tb_player'
+    user_id = Column('user_id', Integer, primary_key=True)
+    email = Column('email', String(128))
+    password = Column('password', String(128))
+    display_name = Column('display_name', String(128))
+    likes = Column('likes', Integer)
+    bio = Column('bio', String(255))
+    is_searching = Column('is_searching', Boolean, default=False)
 
     def __init__(self, email):
         self.email = email
