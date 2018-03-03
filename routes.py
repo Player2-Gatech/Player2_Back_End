@@ -46,7 +46,7 @@ class User(Resource):
         target_id = params['user_id']
 
         # show all players if no id specified
-        if target_id is None:
+        if 'user_id' not in params:
             # insert possible filter parameters here
             all_players = session.query(Player).all()
             return map(lambda p: p.as_dict(), all_players)
