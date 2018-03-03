@@ -5,6 +5,7 @@ import sys
 
 
 app = Flask(__name__)
+port_num = None
 
 try:
     lines = [line.rstrip('\n') for line in open('.secret_key')]
@@ -13,9 +14,17 @@ try:
 except Exception as exception:
     sys.exit("Couldn't get secret key. Does .secret_key exist?")
 
-app.secret_key = secret_key
+try:
+    lines = [line.rstrip('\n') for line in open('.config')]
+    user = lines[0]
+    password = lines[1] 
+    port_num = int(lines[2]) # port being served on
+    engine = create_engine("postgresql://%s:%s@localhost/player2" % (user, password))
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+except Exception as exception:
+    print exception
+    sys.exit("Couldn't get connection credentials. Does .config exist?")
 
 
-engine = create_engine("postgresql://jatin1:password@localhost/player2")
-Session = sessionmaker(bind=engine)
-session = Session()

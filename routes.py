@@ -3,7 +3,7 @@ from flask import Flask
 from flask import Flask, jsonify, abort, make_response, request, g, send_from_directory
 from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
-from config import app, session
+from config import app, session, port_num
 
 auth = HTTPBasicAuth()
 my_api = Api(app)
@@ -71,5 +71,5 @@ def get_auth_token():
 
 # main server run line
 if __name__ == '__main__':
-    app.run(debug=True, port = 8000, host = '0.0.0.0')
+    app.run(debug=True, port = port_num, host = '0.0.0.0')
 
