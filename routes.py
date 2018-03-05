@@ -4,6 +4,7 @@ from flask import Flask, jsonify, abort, make_response, request, g, send_from_di
 from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
 from config import app, session, port_num
+from werkzeug.exceptions import Unauthorized
 
 auth = HTTPBasicAuth()
 my_api = Api(app)
@@ -70,6 +71,7 @@ def verify_password(email_or_token, password):
         # try to authenticate with email/password
         verified_player = session.query(Player).filter_by(email=email_or_token).first()
         if not verified_player or not verified_player.verify_password(password):
+	    abort(401, "Unauthorized")
             return False
     g.user = verified_player
     return True
