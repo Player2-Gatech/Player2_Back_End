@@ -1,6 +1,6 @@
 from models import *
-from flask import Flask
-from flask import Flask, jsonify, abort, make_response, request, g, send_from_directory
+from flask import json
+from flask import Flask, Response, jsonify, abort, make_response, request, g, send_from_directory
 from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
 from config import app, session, port_num
@@ -71,10 +71,14 @@ def verify_password(email_or_token, password):
         # try to authenticate with email/password
         verified_player = session.query(Player).filter_by(email=email_or_token).first()
         if not verified_player or not verified_player.verify_password(password):
-	    abort(401, "Unauthorized")
+	    abort(401, 'Unauthorized')
             return False
     g.user = verified_player
     return True
+
+@app.errorhandler(401)
+def custom_401(error):
+    return Response(json.dumps({'message' : 'Unauthorized'}), 401)
 
 @app.route('/api/token')
 @auth.login_required
