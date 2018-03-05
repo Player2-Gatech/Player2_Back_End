@@ -13,17 +13,17 @@ class User(Resource):
         self.reqparse = reqparse.RequestParser()
 
         # required user parameters
-        self.reqparse.add_argument('email', type=str, location='args')
-        self.reqparse.add_argument('password', type=str, location='args')
+        self.reqparse.add_argument('email', type=str, location='json')
+        self.reqparse.add_argument('password', type=str, location='json')
 
         # reserved for filtering GET requests only
-        self.reqparse.add_argument('id', type=str, location='args')
-        self.reqparse.add_argument('likes', type=int, location='args')
+        self.reqparse.add_argument('id', type=str, location='json')
+        self.reqparse.add_argument('likes', type=int, location='json')
 
         # for updating (PUT doesn't exist yet)
-        self.reqparse.add_argument('display_name', type=str, location='args')
-        self.reqparse.add_argument('is_searching', type=bool, location='args')
-        self.reqparse.add_argument('bio', type=str, location='args')
+        self.reqparse.add_argument('display_name', type=str, location='json')
+        self.reqparse.add_argument('is_searching', type=bool, location='json')
+        self.reqparse.add_argument('bio', type=str, location='json')
 
     # registering a new user
     def post(self):
@@ -62,7 +62,8 @@ my_api.add_resource(User, '/api/player', endpoint = 'player')
 # Methods for authenticating via tokens
 @auth.verify_password
 def verify_password(email_or_token, password):
-    print email_or_token, password
+    print email_or_token
+    print password
     # first try to authenticate by token
     verified_player = Player.verify_auth_token(email_or_token)
     if not verified_player:
