@@ -50,6 +50,20 @@ class Player(Base):
 
         return player
 
+class Game(Base):
+    __tablename__ = 'tb_game'
+    game_id = Column('game_id', Integer, primary_key=True)
+    title = Column('title', String(128))
+    resource_url = Column('resource_url', String(255))
+    console = Column('console', String(128))
+
+    def as_dict(self):
+        return {
+            'title' : self.title,
+            'resource_url' : self.resource_url,
+            'console' : self.console
+        }
+
 
 
 

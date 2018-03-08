@@ -1,3 +1,4 @@
 .secret_key
+.riot_key
 .config
 *.pyc

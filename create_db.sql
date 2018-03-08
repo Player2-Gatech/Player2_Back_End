@@ -10,9 +10,15 @@ CREATE TABLE IF NOT EXISTS tb_player(
 
 CREATE TABLE IF NOT EXISTS tb_game(
     game_id       SERIAL PRIMARY KEY,
-    user_id       INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
     title         VARCHAR(128) NOT NULL,
+    resource_url  VARCHAR(255) NOT NULL,
     console       VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tb_user_game(
+    user_game_id  SERIAL PRIMARY KEY,
+    game_id       INTEGER NOT NULL REFERENCES tb_game(game_id) NOT NULL,
+    user_id       INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tb_comment(

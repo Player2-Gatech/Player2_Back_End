@@ -1,9 +1,10 @@
+import requests
 from models import *
 from flask import json
 from flask import Flask, Response, jsonify, abort, make_response, request, g, send_from_directory
 from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
-from config import app, session, port_num
+from config import app, session, port_num, riot_key
 from werkzeug.exceptions import Unauthorized
 
 auth = HTTPBasicAuth()
@@ -63,8 +64,6 @@ my_api.add_resource(User, '/api/player', endpoint = 'player')
 # Methods for authenticating via tokens
 @auth.verify_password
 def verify_password(email_or_token, password):
-    print email_or_token
-    print password
     # first try to authenticate by token
     verified_player = Player.verify_auth_token(email_or_token)
     if not verified_player:
@@ -76,6 +75,26 @@ def verify_password(email_or_token, password):
     g.user = verified_player
     return True
 
+class Skill(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+
+        # required user parameters
+        self.reqparse.add_argument('gameId', type=str, location='json')
+        self.reqparse.add_argument('displayName', type=str, location='json')
+
+    @auth.login_required
+    def get(self):
+        base_url = 'https://na1.api.riotgames.com/lol'
+        summoner_name = 'a cute bunny'
+        query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
+        id = requests.get(query_string).json()['accountId']
+        print id
+        query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, id, riot_key))
+        r = requests.get(query_string).json()
+        return jsonify({ 'game_info': r})
+
+
 @app.errorhandler(401)
 def custom_401(error):
     return Response(json.dumps({'message' : 'Unauthorized'}), 401)
@@ -85,6 +104,17 @@ def custom_401(error):
 def get_auth_token():
     token = g.user.generate_auth_token()
     return jsonify({ 'token': token.decode('ascii') })
+
+@app.route('/api/skill')
+def get_skill():
+    base_url = 'https://na1.api.riotgames.com/lol'
+    summoner_name = 'a cute bunny'
+    query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
+    id = requests.get(query_string).json()['accountId']
+    print id
+    query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, id, riot_key))
+    r = requests.get(query_string).json()
+    return jsonify({ 'game_info': r})
 
 # main server run line
 if __name__ == '__main__':

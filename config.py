@@ -6,6 +6,7 @@ import sys
 
 app = Flask(__name__)
 port_num = None
+riot_key = None
 
 try:
     lines = [line.rstrip('\n') for line in open('.secret_key')]
@@ -27,4 +28,10 @@ try:
 except Exception as exception:
     sys.exit("Couldn't get connection credentials. Does .config exist?")
 
+try:
+    lines = [line.rstrip('\n') for line in open('.riot_key')]
+    riot_key = lines[0]
+
+except Exception as exception:
+    sys.exit("Couldn't get riot api key. Does .riot_key exist?")
 
