@@ -44,7 +44,7 @@ class User(Resource):
     # getting a user via id (expand this later as necessary)
     @auth.login_required
     def get(self):
-        params = self.reqparse.parse_args()
+        params = {}
 
         # show all players if no id specified
         if 'user_id' not in params:
