@@ -1,4 +1,5 @@
 import requests
+from collections import Counter
 from models import *
 from flask import json
 from flask import Flask, Response, jsonify, abort, make_response, request, g, send_from_directory
@@ -58,8 +59,78 @@ class User(Resource):
                 abort(400, "No player with id " + str(params['user_id']))
             return jsonify({'email': target_player.email})
 
+class Skill(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+
+        # required user parameters
+        self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+        self.reqparse.add_argument('displayName', required=True, type=str, location='args')
+        self.reqparse.add_argument('role', required=True, type=str, location='args')
+
+    def get(self):
+        params = self.reqparse.parse_args()
+        display_name = params['displayName']
+        game_title = params['gameTitle']
+        role = params['role'].lower()
+
+        #input_game = session.query(Game).filter_by(title = game_title).first()
+        # just league for now
+        if game_title == 'League of Legends':
+            return self.handle_league(display_name, role)
+        else:
+            abort(400, 'Input game is invalid!')
+
+    def handle_league(self, summoner_name, role):
+        base_url = 'https://na1.api.riotgames.com/lol'
+
+        # get summoner id
+        query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
+        account_info = requests.get(query_string).json()
+        account_id = account_info['accountId']
+        summoner_id = account_info['id']
+
+        # get win loss and recent win loss by role
+        query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, account_id, riot_key))
+        r = requests.get(query_string).json()
+
+        wins = losses = role_wins = role_losses = 0
+        champs = []
+        for game in r['matches']:
+            game_id = game['gameId']
+            query_string = str('%s/match/v3/matches/%s?api_key=%s' % (base_url, game_id, riot_key))
+            game_data = requests.get(query_string).json()
+            participant_id = [p['participantId'] for p in game_data['participantIdentities'] if p['player']['accountId'] == account_id][0]
+            result = game_data['participants'][participant_id - 1]['stats']['win']
+            if result:
+                wins += 1
+                if game['lane'].lower() == role:
+                    role_wins += 1
+            else:
+                losses += 1
+                if game['lane'].lower() == role:
+                    role_losses += 1
+            champs.append(game_data['participants'][participant_id - 1]['championId'])
+
+        # get summoner rank info
+        query_string = str('%s/league/v3/positions/by-summoner/%s?api_key=%s' % (base_url, summoner_id, riot_key))
+        summoner_data = requests.get(query_string).json()
+        tier = 'Unranked'
+        rank = 'Unranked'
+        if len(summoner_data) > 0:
+            tier = summoner_data[0]['tier']
+            rank = summoner_data[0]['rank']
+
+        # get champion name
+        role_champ = Counter(champs).most_common(1)[0][0]
+        query_string = str('%s/static-data/v3/champions/%s?api_key=%s' % (base_url, role_champ, riot_key))
+        role_champ = requests.get(query_string).json()['name']
+        return jsonify({ 'wins': wins, 'losses' : losses, 'role_wins' : role_wins, 'role_losses' : role_losses, 'role_champ' : role_champ, 'tier' : tier, 'rank' : rank})
+
+
 # Define resource-based routes here
 my_api.add_resource(User, '/api/player', endpoint = 'player')
+my_api.add_resource(Skill, '/api/skill', endpoint = 'skill')
 
 # Methods for authenticating via tokens
 @auth.verify_password
@@ -75,25 +146,6 @@ def verify_password(email_or_token, password):
     g.user = verified_player
     return True
 
-class Skill(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-
-        # required user parameters
-        self.reqparse.add_argument('gameId', type=str, location='json')
-        self.reqparse.add_argument('displayName', type=str, location='json')
-
-    @auth.login_required
-    def get(self):
-        base_url = 'https://na1.api.riotgames.com/lol'
-        summoner_name = 'a cute bunny'
-        query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
-        id = requests.get(query_string).json()['accountId']
-        print id
-        query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, id, riot_key))
-        r = requests.get(query_string).json()
-        return jsonify({ 'game_info': r})
-
 
 @app.errorhandler(401)
 def custom_401(error):
@@ -104,17 +156,6 @@ def custom_401(error):
 def get_auth_token():
     token = g.user.generate_auth_token()
     return jsonify({ 'token': token.decode('ascii') })
-
-@app.route('/api/skill')
-def get_skill():
-    base_url = 'https://na1.api.riotgames.com/lol'
-    summoner_name = 'a cute bunny'
-    query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
-    id = requests.get(query_string).json()['accountId']
-    print id
-    query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, id, riot_key))
-    r = requests.get(query_string).json()
-    return jsonify({ 'game_info': r})
 
 # main server run line
 if __name__ == '__main__':
