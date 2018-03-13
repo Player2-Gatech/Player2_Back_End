@@ -3,22 +3,30 @@ CREATE TABLE IF NOT EXISTS tb_player(
     email         VARCHAR(128) UNIQUE NOT NULL,
     password      VARCHAR(128) NOT NULL,
     display_name  VARCHAR(128),
+    image_url     VARCHAR(255),
     likes         INT DEFAULT 0,
-    bio           VARCHAR(255),
-    is_searching  boolean DEFAULT 't'
+    bio           VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS tb_game(
-    game_id       SERIAL PRIMARY KEY,
-    title         VARCHAR(128) NOT NULL,
-    console       VARCHAR(128) NOT NULL
+    game_id        SERIAL PRIMARY KEY,
+    title          VARCHAR(128) UNIQUE NOT NULL,
+    ign_descriptor VARCHAR(128) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS tb_user_game(
-    user_game_id  SERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS tb_game_role(
+    game_role_id SERIAL PRIMARY KEY,
+    game_id      INTEGER NOT NULL REFERENCES tb_game(game_id) NOT NULL,
+    role         VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tb_player_game(
+    player_game_id  SERIAL PRIMARY KEY,
     game_id       INTEGER NOT NULL REFERENCES tb_game(game_id) NOT NULL,
     user_id       INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
-    display_name  VARCHAR(128) NOT NULL
+    display_name  VARCHAR(128) NOT NULL,
+    role          VARCHAR(128) NOT NULL,
+    partner_role  VARCHAR(128) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tb_comment(
@@ -35,4 +43,33 @@ CREATE TABLE IF NOT EXISTS tb_clip(
     game          VARCHAR(128) NOT NULL
 );
 
-INSERT INTO tb_game (title, resource_url, console) VALUES('League of Legends', 'PC');
+CREATE TABLE IF NOT EXISTS tb_player_skill (
+    skill_id       SERIAL PRIMARY KEY,
+    player_game_id INTEGER NOT NULL REFERENCES tb_player_game(player_game_id) NOT NULL,
+    user_id        INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
+    role           VARCHAR(128) NOT NULL,
+    role_wins      INTEGER NOT NULL,
+    role_losses    INTEGER NOT NULL,
+    wins           INTEGER NOT NULL,
+    losses         INTEGER NOT NULL,
+    role_pick      VARCHAR(128) NOT NULL,
+    tier           VARCHAR(128) NOT NULL,
+    rank           VARCHAR(128) NOT NULL
+);
+
+/* Uncomment if the database is being created from scratch.
+
+INSERT INTO tb_game (title, ign_descriptor) VALUES('League of Legends', 'Summoner Name');
+INSERT INTO tb_game (title, ign_descriptor) VALUES('Overwatch', 'Battle.NET ID');
+
+INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Bottom');
+INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Middle');
+INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Top');
+INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Jungle');
+INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Support');
+
+INSERT INTO tb_game_role (game_id, role) VALUES('2', 'DPS');
+INSERT INTO tb_game_role (game_id, role) VALUES('2', 'Support');
+INSERT INTO tb_game_role (game_id, role) VALUES('2', 'Tank');
+
+*/

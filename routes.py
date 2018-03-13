@@ -13,20 +13,25 @@ my_api = Api(app)
 
 class User(Resource):
     def __init__(self):
+        # used for auth
         self.reqparse = reqparse.RequestParser()
 
-        # required user parameters
         self.reqparse.add_argument('email', type=str, location='json')
         self.reqparse.add_argument('password', type=str, location='json')
 
-        # reserved for filtering GET requests only
-        self.reqparse.add_argument('id', type=str, location='json')
-        self.reqparse.add_argument('likes', type=int, location='json')
+        # used for getting user profile info
+        self.profile_get_reqparse = reqparse.RequestParser()
 
-        # for updating (PUT doesn't exist yet)
-        self.reqparse.add_argument('display_name', type=str, location='json')
-        self.reqparse.add_argument('is_searching', type=bool, location='json')
-        self.reqparse.add_argument('bio', type=str, location='json')
+        self.profile_get_reqparse.add_argument('userEmail', type=str, location='args')
+
+        # used for updating user porfile info
+        self.profile_put_reqparse = reqparse.RequestParser()
+
+        self.profile_put_reqparse.add_argument('userEmail', type=str, location='json', required=True)
+        self.profile_put_reqparse.add_argument('displayName', type=str, location='json', required=True)
+        self.profile_put_reqparse.add_argument('imageUrl', type=str, location='json', required=True)
+        self.profile_put_reqparse.add_argument('bio', type=str, location='json', required=True)
+        self.profile_put_reqparse.add_argument('playerGameRole', type=list, location='json', required=True)
 
     # registering a new user
     def post(self):
@@ -43,50 +48,122 @@ class User(Resource):
         return new_player.as_dict()
 
     # getting a user via id (expand this later as necessary)
-    @auth.login_required
     def get(self):
-        params = {}
-
+        params = self.profile_get_reqparse.parse_args()
+        print params
         # show all players if no id specified
-        if 'user_id' not in params:
-            # insert possible filter parameters here
+        if params['userEmail'] is None:
             all_players = session.query(Player).all()
             return map(lambda p: p.as_dict(), all_players)
         # otherwise, show specified player
         else:
-            target_player = session.query(Player).filter_by(user_id = params['user_id']).first()
+            target_player = session.query(Player).filter_by(email = params['userEmail']).first()
             if not target_player:
-                abort(400, "No player with id " + str(params['user_id']))
-            return jsonify({'email': target_player.email})
+                abort(400, "No player with that email!")
+            return target_player.as_dict()
+    def put(self):
+        params = self.profile_put_reqparse.parse_args()
+        target_player = session.query(Player).filter_by(email = params['userEmail']).first()
+        # update user if appropriate info exists
+        target_player.bio = params['bio']
+        target_player.image_url = params['imageUrl']
+        target_player.display_name = params['displayName']
+        target_id = target_player.user_id
+        updated_player_games = []
+        for game in params['playerGameRole']:
+            target_game_id = session.query(Game).filter_by(title = game['gameTitle'])
+            target_player_game = session.query(PlayerGame).filter(PlayerGame.user_id == target_id and PlayerGame.game_id == target_game_id).first()
+            target_player_game.role = game['role']
+            target_player_game.partner_role = game['partnerRole']
+            updated_player_games.append(target_player_game.as_dict())
 
-class Skill(Resource):
+        session.commit()
+        return jsonify({'updatedPlayer' : target_player.as_dict(), 'updatedGames' : updated_player_games})
+
+
+class Games(Resource):
+
+    def get(self):
+        games = session.query(Game).all()
+        all_games = []
+        for i, game in enumerate(games):
+            game = game.as_dict()
+            roles = session.query(GameRole).filter_by(game_id = game['game_id']).all()
+            roles_list = map(lambda r: r.as_dict()['role'], roles)
+            game['roles'] = roles_list
+            all_games.append(game)
+        return jsonify({'games': all_games})
+
+
+class UserGame(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('gameTitle',required=True, type=str, location='json')
+        self.reqparse.add_argument('userEmail',required=True, type=str, location='json')
+        self.reqparse.add_argument('displayName',required=True, type=str, location='json')
+        self.reqparse.add_argument('role',required=True, type=str, location='json')
+        self.reqparse.add_argument('partnerRole',required=True, type=str, location='json')
+
+    def post(self):
+        params = self.reqparse.parse_args()
+        user = session.query(Player).filter_by(email = params['userEmail']).first()
+        game = session.query(Game).filter_by(title = params['gameTitle']).first()
+        if user is None:
+            abort(400, "Not a valid user email!")
+        if game is None:
+            abort(400, "Not a valid game title!")
+        user_id = user.user_id
+        game_id = game.game_id
+        display_name = params['displayName']
+        role = params['role']
+        partner_role = params['partnerRole']
+
+        try:
+            new_player_game = PlayerGame(game_id, user_id, display_name, role, partner_role)
+            session.add(new_player_game)
+            session.commit()
+            return jsonify({'Player_Game': new_player_game.as_dict()})
+        except Exception as e:
+            print e
+            session.rollback()
+            # Should not be able to get here
+            abort(400, "Something went wrong")
+
+
+class UserSkill(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
 
         # required user parameters
-        self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
-        self.reqparse.add_argument('displayName', required=True, type=str, location='args')
-        self.reqparse.add_argument('role', required=True, type=str, location='args')
+        self.reqparse.add_argument('userEmail',required=True, type=str, location='args')
+        self.reqparse.add_argument('update',required=False, type=bool, location='args') # this param should only be used for an update cronjob
 
     def get(self):
         params = self.reqparse.parse_args()
-        display_name = params['displayName']
-        game_title = params['gameTitle']
-        role = params['role'].lower()
+        user = session.query(Player).filter_by(email = params['userEmail']).first()
+        if user is None:
+            abort(400, "Not a valid user email!")
+        user_id = user.user_id
 
-        #input_game = session.query(Game).filter_by(title = game_title).first()
-        # just league for now
-        if game_title == 'League of Legends':
-            return self.handle_league(display_name, role)
+        player_game = session.query(PlayerGame).filter_by(user_id = user_id).first() #change to .all() and handle with a loop when we are dealing with multiple games
+        game = session.query(Game).filter_by(game_id = player_game.game_id).first()
+        if game.title == 'League of Legends':
+            existing_skills = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id).first()
+            if params['update'] or existing_skills is None:
+                return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, params['update'])
+            else:
+                return existing_skills.as_dict()
         else:
             abort(400, 'Input game is invalid!')
 
-    def handle_league(self, summoner_name, role):
+    def handle_league(self, summoner_name, role, player_game_id, user_id, shouldUpdate):
         base_url = 'https://na1.api.riotgames.com/lol'
 
         # get summoner id
         query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
         account_info = requests.get(query_string).json()
+        if 'accountId' not in  account_info.keys():
+            abort(500, 'Make sure the server regenerated its Riot API key today!')
         account_id = account_info['accountId']
         summoner_id = account_info['id']
 
@@ -125,12 +202,20 @@ class Skill(Resource):
         role_champ = Counter(champs).most_common(1)[0][0]
         query_string = str('%s/static-data/v3/champions/%s?api_key=%s' % (base_url, role_champ, riot_key))
         role_champ = requests.get(query_string).json()['name']
+
+        # update or place in database
+        retrieved_states = PlayerSkill(player_game_id, user_id, role, role_champ, rank, tier, role_wins, role_losses, wins, losses)
+        session.add(retrieved_states)
+        session.commit()
+
         return jsonify({ 'wins': wins, 'losses' : losses, 'role_wins' : role_wins, 'role_losses' : role_losses, 'role_champ' : role_champ, 'tier' : tier, 'rank' : rank})
 
 
 # Define resource-based routes here
 my_api.add_resource(User, '/api/player', endpoint = 'player')
-my_api.add_resource(Skill, '/api/skill', endpoint = 'skill')
+my_api.add_resource(Games, '/api/games', endpoint = 'games')
+my_api.add_resource(UserGame, '/api/playerGame', endpoint = 'playerGame')
+my_api.add_resource(UserSkill, '/api/playerSkill', endpoint = 'skill')
 
 # Methods for authenticating via tokens
 @auth.verify_password
