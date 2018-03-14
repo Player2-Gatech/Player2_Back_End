@@ -19,15 +19,9 @@ class User(Resource):
         self.reqparse.add_argument('email', type=str, location='json')
         self.reqparse.add_argument('password', type=str, location='json')
 
-        # used for getting user profile info
-        self.profile_get_reqparse = reqparse.RequestParser()
-
-        self.profile_get_reqparse.add_argument('userEmail', type=str, location='args')
-
         # used for updating user porfile info
         self.profile_put_reqparse = reqparse.RequestParser()
 
-        self.profile_put_reqparse.add_argument('userEmail', type=str, location='json', required=True)
         self.profile_put_reqparse.add_argument('displayName', type=str, location='json', required=True)
         self.profile_put_reqparse.add_argument('imageUrl', type=str, location='json', required=True)
         self.profile_put_reqparse.add_argument('bio', type=str, location='json', required=True)
@@ -48,22 +42,21 @@ class User(Resource):
         return new_player.as_dict()
 
     # getting a user via id (expand this later as necessary)
+    @auth.login_required
     def get(self):
-        params = self.profile_get_reqparse.parse_args()
-        print params
         # show all players if no id specified
-        if params['userEmail'] is None:
+        if False: #params['userEmail'] is None:
             all_players = session.query(Player).all()
             return map(lambda p: p.as_dict(), all_players)
         # otherwise, show specified player
         else:
-            target_player = session.query(Player).filter_by(email = params['userEmail']).first()
-            if not target_player:
-                abort(400, "No player with that email!")
+            target_player = g.user
             return target_player.as_dict()
+
+    @auth.login_required
     def put(self):
         params = self.profile_put_reqparse.parse_args()
-        target_player = session.query(Player).filter_by(email = params['userEmail']).first()
+        target_player = g.user
         # update user if appropriate info exists
         target_player.bio = params['bio']
         target_player.image_url = params['imageUrl']
@@ -99,17 +92,15 @@ class UserGame(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('gameTitle',required=True, type=str, location='json')
-        self.reqparse.add_argument('userEmail',required=True, type=str, location='json')
         self.reqparse.add_argument('displayName',required=True, type=str, location='json')
         self.reqparse.add_argument('role',required=True, type=str, location='json')
         self.reqparse.add_argument('partnerRole',required=True, type=str, location='json')
 
+    @auth.login_required
     def post(self):
         params = self.reqparse.parse_args()
-        user = session.query(Player).filter_by(email = params['userEmail']).first()
+        user = g.user
         game = session.query(Game).filter_by(title = params['gameTitle']).first()
-        if user is None:
-            abort(400, "Not a valid user email!")
         if game is None:
             abort(400, "Not a valid game title!")
         user_id = user.user_id
@@ -134,16 +125,13 @@ class UserSkill(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
 
-        # required user parameters
-        self.reqparse.add_argument('userEmail',required=True, type=str, location='args')
-        self.reqparse.add_argument('update',required=False, type=bool, location='args') # this param should only be used for an update cronjob
+        # this param should only be used for an update cronjob
+        self.reqparse.add_argument('update',required=False, type=bool, location='args')
 
+    @auth.login_required
     def get(self):
         params = self.reqparse.parse_args()
-        user = session.query(Player).filter_by(email = params['userEmail']).first()
-        if user is None:
-            abort(400, "Not a valid user email!")
-        user_id = user.user_id
+        user_id = g.user.user_id
 
         player_game = session.query(PlayerGame).filter_by(user_id = user_id).first() #change to .all() and handle with a loop when we are dealing with multiple games
         game = session.query(Game).filter_by(game_id = player_game.game_id).first()
