@@ -1,5 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
+from sqlalchemy.orm import relationship
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 from config import app, session
@@ -16,17 +17,21 @@ class Player(Base):
     likes = Column('likes', Integer)
     bio = Column('bio', String(255))
 
+    player_games = relationship('PlayerGame')
+    player_skill = relationship('PlayerSkill')
+
     def __init__(self, email):
         self.email = email
 
     def as_dict(self):
         return {
-            'user_id' : self.user_id,
             'email' : self.email,
             'display_name' : self.display_name,
             'image_url' : self.image_url,
             'likes' : self.likes,
-            'bio' : self.bio
+            'bio' : self.bio,
+            'playerGameRole' : map(lambda x: x.as_dict(), self.player_games),
+            'playerSkill' : map(lambda x: x.as_dict(), self.player_skill)
         }
 
     def hash_password(self, password):
@@ -60,7 +65,6 @@ class Game(Base):
 
     def as_dict(self):
         return {
-            'game_id' : self.game_id,
             'title' : self.title,
             'ign_descriptor' : self.ign_descriptor,
         }
@@ -85,6 +89,8 @@ class PlayerGame(Base):
     role = Column('role', String(128))
     partner_role = Column('partner_role', String(128))
 
+    game = relationship('Game')
+
     def __init__(self, game_id, user_id, display_name, role, partner_role):
         self.game_id = game_id
         self.user_id = user_id
@@ -92,10 +98,10 @@ class PlayerGame(Base):
         self.role = role
         self.partner_role = partner_role
 
+
     def as_dict(self):
         return {
-            'user_id' : self.user_id,
-            'game_id' : self.game_id,
+            'game_title' : self.game.as_dict()['title'],
             'display_name' : self.display_name,
             'role' : self.role,
             'partner_role' : self.partner_role
@@ -129,8 +135,6 @@ class PlayerSkill(Base):
 
     def as_dict(self):
         return {
-            'player_game_id' : self.player_game_id,
-            'user_id' : self.user_id,
             'role' : self.role,
             'role_pick' : self.role_pick,
             'rank' : self.rank,
