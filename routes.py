@@ -134,6 +134,8 @@ class UserSkill(Resource):
         user_id = g.user.user_id
 
         player_game = session.query(PlayerGame).filter_by(user_id = user_id).first() #change to .all() and handle with a loop when we are dealing with multiple games
+        if player_game is None:
+            abort(400, 'This player currently has no games!')
         game = session.query(Game).filter_by(game_id = player_game.game_id).first()
         if game.title == 'League of Legends':
             existing_skills = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id).first()
@@ -192,11 +194,11 @@ class UserSkill(Resource):
         role_champ = requests.get(query_string).json()['name']
 
         # update or place in database
-        retrieved_states = PlayerSkill(player_game_id, user_id, role, role_champ, rank, tier, role_wins, role_losses, wins, losses)
-        session.add(retrieved_states)
+        retrieved_stats = PlayerSkill(player_game_id, user_id, role, role_champ, rank, tier, role_wins, role_losses, wins, losses)
+        session.add(retrieved_stats)
         session.commit()
 
-        return jsonify({ 'wins': wins, 'losses' : losses, 'role_wins' : role_wins, 'role_losses' : role_losses, 'role_champ' : role_champ, 'tier' : tier, 'rank' : rank})
+        return retrieved_stats.as_dict()
 
 
 # Define resource-based routes here
