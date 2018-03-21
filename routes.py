@@ -7,6 +7,7 @@ from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
 from config import app, session, port_num, riot_key
 from werkzeug.exceptions import Unauthorized
+from matching import sort_matches
 
 auth = HTTPBasicAuth()
 my_api = Api(app)
@@ -44,14 +45,8 @@ class User(Resource):
     # getting a user via id (expand this later as necessary)
     @auth.login_required
     def get(self):
-        # show all players if no id specified
-        if False: #params['userEmail'] is None:
-            all_players = session.query(Player).all()
-            return map(lambda p: p.as_dict(), all_players)
-        # otherwise, show specified player
-        else:
-            target_player = g.user
-            return target_player.as_dict()
+        target_player = g.user
+        return target_player.as_dict()
 
     @auth.login_required
     def put(self):
@@ -202,12 +197,28 @@ class UserSkill(Resource):
 
         return retrieved_stats.as_dict()
 
+class UserMatches(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+
+    @auth.login_required
+    def get(self):
+        params = self.reqparse.parse_args()
+        # retrieve other users who play the same game and call similarity function
+        all_players = session.query(Player, PlayerGame, Game).filter(Player.user_id != g.user.user_id and Player.user_id == PlayerGame.user_id).filter(PlayerGame.game_id == Game.game_id).filter(Game.title == params['gameTitle']).all()
+        eligible_players = map(lambda p: p[0].as_dict(), all_players)
+        top_matches = sort_matches(g.user.as_dict(), eligible_players)
+        # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
+        return top_matches
+
 
 # Define resource-based routes here
 my_api.add_resource(User, '/api/player', endpoint = 'player')
 my_api.add_resource(Games, '/api/games', endpoint = 'games')
 my_api.add_resource(UserGame, '/api/playerGame', endpoint = 'playerGame')
 my_api.add_resource(UserSkill, '/api/playerSkill', endpoint = 'skill')
+my_api.add_resource(UserMatches, '/api/matches', endpoint = 'matches')
 
 # Methods for authenticating via tokens
 @auth.verify_password
