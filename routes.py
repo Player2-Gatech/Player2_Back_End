@@ -23,7 +23,7 @@ class User(Resource):
         self.profile_put_reqparse = reqparse.RequestParser()
 
         self.profile_put_reqparse.add_argument('displayName', type=str, location='json', required=True)
-        self.profile_put_reqparse.add_argument('imageUrl', type=str, location='json', required=True)
+        self.profile_put_reqparse.add_argument('profilePhoto', type=str, location='json', required=True)
         self.profile_put_reqparse.add_argument('bio', type=str, location='json', required=True)
         self.profile_put_reqparse.add_argument('playerGameRole', type=list, location='json', required=True)
 
@@ -59,13 +59,15 @@ class User(Resource):
         target_player = g.user
         # update user if appropriate info exists
         target_player.bio = params['bio']
-        target_player.image_url = params['imageUrl']
+        target_player.profile_photo = params['profilePhoto']
         target_player.display_name = params['displayName']
         target_id = target_player.user_id
         updated_player_games = []
         for game in params['playerGameRole']:
             target_game_id = session.query(Game).filter_by(title = game['gameTitle'])
             target_player_game = session.query(PlayerGame).filter(PlayerGame.user_id == target_id and PlayerGame.game_id == target_game_id).first()
+            if target_player_game is None:
+                abort(400, 'The user is currently not associated with one of the games you are trying to update. Add that game for the user first!')
             target_player_game.role = game['role']
             target_player_game.partner_role = game['partnerRole']
             updated_player_games.append(target_player_game.as_dict())

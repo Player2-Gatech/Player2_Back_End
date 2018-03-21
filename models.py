@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, LargeBinary
 from sqlalchemy.orm import relationship
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
@@ -13,7 +13,7 @@ class Player(Base):
     email = Column('email', String(128))
     password = Column('password', String(128))
     display_name = Column('display_name', String(128))
-    image_url = Column('image_url', String(255))
+    profile_photo = Column('profile_photo', LargeBinary)
     likes = Column('likes', Integer)
     bio = Column('bio', String(255))
 
@@ -26,8 +26,8 @@ class Player(Base):
     def as_dict(self):
         return {
             'email' : self.email,
-            'display_name' : self.display_name,
-            'image_url' : self.image_url,
+            'displayName' : self.display_name,
+            'profilePhoto' : self.profile_photo,
             'likes' : self.likes,
             'bio' : self.bio,
             'playerGameRole' : map(lambda x: x.as_dict(), self.player_games),
@@ -66,7 +66,7 @@ class Game(Base):
     def as_dict(self):
         return {
             'title' : self.title,
-            'ign_descriptor' : self.ign_descriptor,
+            'ignDescriptor' : self.ign_descriptor,
         }
 
 class GameRole(Base):
@@ -136,11 +136,11 @@ class PlayerSkill(Base):
     def as_dict(self):
         return {
             'role' : self.role,
-            'role_pick' : self.role_pick,
+            'rolePick' : self.role_pick,
             'rank' : self.rank,
             'tier' : self.tier,
-            'role_wins' : self.role_wins,
-            'role_losses' : self.role_losses,
+            'roleWins' : self.role_wins,
+            'roleLosses' : self.role_losses,
             'wins' : self.wins,
             'losses' : self.losses
         }
