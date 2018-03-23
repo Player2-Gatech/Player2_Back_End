@@ -78,8 +78,8 @@ class Games(Resource):
         all_games = []
         for i, game in enumerate(games):
             game = game.as_dict()
-            roles = session.query(GameRole).filter_by(game_id = game['game_id']).all()
-            roles_list = map(lambda r: r.as_dict()['role'], roles)
+            roles = session.query(Game, GameRole).filter(Game.title == game['title']).filter(Game.game_id == GameRole.game_id).all()
+            roles_list = map(lambda r: r[1].as_dict()['role'], roles)
             game['roles'] = roles_list
             all_games.append(game)
         return jsonify({'games': all_games})
