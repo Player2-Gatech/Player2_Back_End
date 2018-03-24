@@ -141,18 +141,17 @@ class UserSkill(Resource):
         params = self.reqparse.parse_args()
         user_id = g.user.user_id
 
-        player_game = session.query(PlayerGame).filter_by(user_id = user_id).first() #change to .all() and handle with a loop when we are dealing with multiple games
-        if player_game is None:
+        player_games = session.query(PlayerGame).filter_by(user_id = user_id).all()
+        if player_games is None:
             abort(400, 'This player currently has no games!')
-        game = session.query(Game).filter_by(game_id = player_game.game_id).first()
-        if game.title == 'League of Legends':
-            existing_skills = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id).first()
-            if params['update'] or existing_skills is None:
-                return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, params['update'])
-            else:
-                return existing_skills.as_dict()
-        else:
-            abort(400, 'Input game is invalid!')
+        for player_game in player_games:
+            game = session.query(Game).filter_by(game_id = player_game.game_id).first()
+            if game.title == 'League of Legends':
+                existing_skills = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id).first()
+                if params['update'] or existing_skills is None:
+                    return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, params['update'])
+                else:
+                    return jsonify({'playerSkill': existing_skills.as_dict()})
 
     def handle_league(self, summoner_name, role, player_game_id, user_id, shouldUpdate):
         base_url = 'https://na1.api.riotgames.com/lol'
@@ -206,7 +205,7 @@ class UserSkill(Resource):
         session.add(retrieved_stats)
         session.commit()
 
-        return retrieved_stats.as_dict()
+        return jsonify({'playerSkill': retrieved_stats.as_dict()})
 
 class UserMatches(Resource):
     def __init__(self):
