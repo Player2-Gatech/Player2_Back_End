@@ -101,10 +101,10 @@ class PlayerGame(Base):
 
     def as_dict(self):
         return {
-            'game_title' : self.game.as_dict()['title'],
-            'display_name' : self.display_name,
+            'gameTitle' : self.game.as_dict()['title'],
+            'displayName' : self.display_name,
             'role' : self.role,
-            'partner_role' : self.partner_role
+            'partnerRole' : self.partner_role
         }
 
 class PlayerSkill(Base):
