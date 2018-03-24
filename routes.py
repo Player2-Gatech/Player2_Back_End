@@ -26,7 +26,7 @@ class User(Resource):
         self.profile_put_reqparse.add_argument('displayName', type=str, location='json', required=False)
         self.profile_put_reqparse.add_argument('profilePhoto', type=str, location='json', required=False)
         self.profile_put_reqparse.add_argument('bio', type=str, location='json', required=False)
-        self.profile_put_reqparse.add_argument('playerGameRole', location='json', required=False)
+        self.profile_put_reqparse.add_argument('playerGameRole', type=dict, location='json', required=False)
 
     # registering a new user
     def post(self):
