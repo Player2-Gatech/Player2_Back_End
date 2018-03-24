@@ -67,6 +67,7 @@ class User(Resource):
                 target_player_game = session.query(PlayerGame).filter(PlayerGame.user_id == target_id and PlayerGame.game_id == target_game_id).first()
                 if target_player_game is None:
                     abort(400, 'The user is currently not associated with one of the games you are trying to update. Add that game for the user first!')
+                target_player_game.display_name = game['displayName']
                 target_player_game.role = game['role']
                 target_player_game.partner_role = game['partnerRole']
                 updated_player_games.append(target_player_game.as_dict())
