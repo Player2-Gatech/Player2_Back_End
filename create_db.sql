@@ -68,7 +68,7 @@ INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Jungle');
 INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Support');
 
 INSERT INTO tb_game (title, ign_descriptor) VALUES('Overwatch', 'Battle.NET ID');
-*/
+
 INSERT INTO tb_game_role (game_id, role) VALUES('2', 'DPS');
 INSERT INTO tb_game_role (game_id, role) VALUES('2', 'Support');
 INSERT INTO tb_game_role (game_id, role) VALUES('2', 'Tank');
@@ -79,3 +79,4 @@ INSERT INTO tb_game_role (game_id, role) VALUES('3', 'Tank');
 INSERT INTO tb_game_role (game_id, role) VALUES('3', 'Healer');
 INSERT INTO tb_game_role (game_id, role) VALUES('3', 'DPS');
 
+*/
