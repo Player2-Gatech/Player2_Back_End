@@ -23,10 +23,10 @@ class User(Resource):
         # used for updating user porfile info
         self.profile_put_reqparse = reqparse.RequestParser()
 
-        self.profile_put_reqparse.add_argument('displayName', type=str, location='json', required=True)
-        self.profile_put_reqparse.add_argument('profilePhoto', type=str, location='json', required=True)
-        self.profile_put_reqparse.add_argument('bio', type=str, location='json', required=True)
-        self.profile_put_reqparse.add_argument('playerGameRole', type=list, location='json', required=True)
+        self.profile_put_reqparse.add_argument('displayName', type=str, location='json', required=False)
+        self.profile_put_reqparse.add_argument('profilePhoto', type=str, location='json', required=False)
+        self.profile_put_reqparse.add_argument('bio', type=str, location='json', required=False)
+        self.profile_put_reqparse.add_argument('playerGameRole', type=list, location='json', required=False)
 
     # registering a new user
     def post(self):
@@ -53,21 +53,25 @@ class User(Resource):
         params = self.profile_put_reqparse.parse_args()
         target_player = g.user
         # update user if appropriate info exists
-        target_player.bio = params['bio']
-        target_player.profile_photo = params['profilePhoto']
-        target_player.display_name = params['displayName']
+        if params['bio'] is not None:
+            target_player.bio = params['bio']
+        if params['profilePhoto'] is not None:
+            target_player.profile_photo = params['profilePhoto']
+        if params['displayName'] is not None:
+            target_player.display_name = params['displayName']
         target_id = target_player.user_id
         updated_player_games = []
-        for game in params['playerGameRole']:
-            target_game_id = session.query(Game).filter_by(title = game['gameTitle'])
-            target_player_game = session.query(PlayerGame).filter(PlayerGame.user_id == target_id and PlayerGame.game_id == target_game_id).first()
-            if target_player_game is None:
-                abort(400, 'The user is currently not associated with one of the games you are trying to update. Add that game for the user first!')
-            target_player_game.role = game['role']
-            target_player_game.partner_role = game['partnerRole']
-            updated_player_games.append(target_player_game.as_dict())
+        if params['playerGameRole'] is not None:
+            for game in params['playerGameRole']:
+                target_game_id = session.query(Game).filter_by(title = game['gameTitle'])
+                target_player_game = session.query(PlayerGame).filter(PlayerGame.user_id == target_id and PlayerGame.game_id == target_game_id).first()
+                if target_player_game is None:
+                    abort(400, 'The user is currently not associated with one of the games you are trying to update. Add that game for the user first!')
+                target_player_game.role = game['role']
+                target_player_game.partner_role = game['partnerRole']
+                updated_player_games.append(target_player_game.as_dict())
 
-        session.commit()
+            session.commit()
         return jsonify({'updatedPlayer' : target_player.as_dict(), 'updatedGames' : updated_player_games})
 
 
@@ -92,6 +96,12 @@ class UserGame(Resource):
         self.reqparse.add_argument('displayName',required=True, type=str, location='json')
         self.reqparse.add_argument('role',required=True, type=str, location='json')
         self.reqparse.add_argument('partnerRole',required=True, type=str, location='json')
+
+    @auth.login_required
+    def get(self):
+        user_games = session.query(PlayerGame).filter_by(user_id = g.user.user_id).all()
+        user_games = map(lambda p: p.as_dict(), user_games)
+        return jsonify({'userGames' : user_games})
 
     @auth.login_required
     def post(self):
