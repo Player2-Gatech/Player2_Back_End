@@ -71,7 +71,7 @@ class User(Resource):
                 target_player_game.partner_role = game['partnerRole']
                 updated_player_games.append(target_player_game.as_dict())
 
-            session.commit()
+        session.commit()
         return jsonify({'updatedPlayer' : target_player.as_dict(), 'updatedGames' : updated_player_games})
 
 
