@@ -190,7 +190,7 @@ class UserSkill(Resource):
         query_string = str('%s/league/v3/positions/by-summoner/%s?api_key=%s' % (base_url, summoner_id, riot_key))
         summoner_data = requests.get(query_string).json()
         tier = 'Unranked'
-        rank = 'Unranked'
+        rank = ''
         if len(summoner_data) > 0:
             tier = summoner_data[0]['tier']
             rank = summoner_data[0]['rank']
