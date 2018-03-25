@@ -150,7 +150,7 @@ class UserSkill(Resource):
                 updateable_query = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id)
                 existing_skills = updateable_query.first()
                 if params['update'] or existing_skills is None:
-                    return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, params['update'], updateable_query)
+                    return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, existing_skills is not None and params['update'], updateable_query)
                 else:
                     return jsonify({'playerSkill': existing_skills.as_dict()})
 
@@ -161,7 +161,7 @@ class UserSkill(Resource):
         query_string = str('%s/summoner/v3/summoners/by-name/%s?api_key=%s' % (base_url, summoner_name, riot_key))
         account_info = requests.get(query_string).json()
         if 'accountId' not in  account_info.keys():
-            abort(500, 'Make sure the server regenerated its Riot API key today!')
+            abort(500, 'Either the server needs to regenerate its API Key, or the summoner name is invalid')
         account_id = account_info['accountId']
         summoner_id = account_info['id']
 
