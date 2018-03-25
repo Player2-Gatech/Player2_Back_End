@@ -202,8 +202,9 @@ class UserSkill(Resource):
 
         # update or place in database
         retrieved_stats = PlayerSkill(player_game_id, user_id, role, role_champ, rank, tier, role_wins, role_losses, wins, losses)
-        session.add(retrieved_stats)
-        session.commit()
+        if (shouldUpdate):
+            session.add(retrieved_stats)
+            session.commit()
 
         return jsonify({'playerSkill': retrieved_stats.as_dict()})
 
