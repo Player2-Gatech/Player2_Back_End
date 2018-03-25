@@ -147,13 +147,14 @@ class UserSkill(Resource):
         for player_game in player_games:
             game = session.query(Game).filter_by(game_id = player_game.game_id).first()
             if game.title == 'League of Legends':
-                existing_skills = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id).first()
+                updateable_query = session.query(PlayerSkill).filter_by(player_game_id = player_game.player_game_id)
+                existing_skills = updateable_query.first()
                 if params['update'] or existing_skills is None:
-                    return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, params['update'])
+                    return self.handle_league(player_game.display_name, player_game.role, player_game.player_game_id, user_id, params['update'], updateable_query)
                 else:
                     return jsonify({'playerSkill': existing_skills.as_dict()})
 
-    def handle_league(self, summoner_name, role, player_game_id, user_id, shouldUpdate):
+    def handle_league(self, summoner_name, role, player_game_id, user_id, shouldUpdate, updateable_query):
         base_url = 'https://na1.api.riotgames.com/lol'
 
         # get summoner id
@@ -203,8 +204,10 @@ class UserSkill(Resource):
         # update or place in database
         retrieved_stats = PlayerSkill(player_game_id, user_id, role, role_champ, rank, tier, role_wins, role_losses, wins, losses)
         if (shouldUpdate):
+            updateable_query.update(retrieved_stats.as_update_dict())
+        else:
             session.add(retrieved_stats)
-            session.commit()
+        session.commit()
 
         return jsonify({'playerSkill': retrieved_stats.as_dict()})
 

@@ -133,6 +133,17 @@ class PlayerSkill(Base):
         self.wins = wins
         self.losses = losses
 
+    def as_update_dict(self):
+        return {
+            'role' : self.role,
+            'role_pick' : self.role_pick,
+            'rank' : self.rank,
+            'tier' : self.tier,
+            'role_wins' : self.role_wins,
+            'role_losses' : self.role_losses,
+            'wins' : self.wins,
+            'losses' : self.losses
+        }
     def as_dict(self):
         return {
             'role' : self.role,
