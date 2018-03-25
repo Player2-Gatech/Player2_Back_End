@@ -177,13 +177,15 @@ class UserSkill(Resource):
             game_data = requests.get(query_string).json()
             participant_id = [p['participantId'] for p in game_data['participantIdentities'] if p['player']['accountId'] == account_id][0]
             result = game_data['participants'][participant_id - 1]['stats']['win']
+            game_role = game['lane'].lower()
+            role = role.lower()
             if result:
                 wins += 1
-                if game['lane'].lower() == role:
+                if (game_role == role) or (game_role in role):
                     role_wins += 1
             else:
                 losses += 1
-                if game['lane'].lower() == role:
+                if (game_role == role) or (game_role in role):
                     role_losses += 1
             champs.append(game_data['participants'][participant_id - 1]['championId'])
 
@@ -197,9 +199,9 @@ class UserSkill(Resource):
             rank = summoner_data[0]['rank']
 
         # get champion name
+        champ_map = json.load(open('champion_cache.json'))
         role_champ = Counter(champs).most_common(1)[0][0]
-        query_string = str('%s/static-data/v3/champions/%s?api_key=%s' % (base_url, role_champ, riot_key))
-        role_champ = requests.get(query_string).json()['name']
+        role_champ = [champ_map['data'][key]['name'] for key in champ_map['data'] if champ_map['data'][key]['id'] == role_champ][0]
 
         # update or place in database
         retrieved_stats = PlayerSkill(player_game_id, user_id, role, role_champ, rank, tier, role_wins, role_losses, wins, losses)
