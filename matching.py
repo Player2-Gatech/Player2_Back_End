@@ -22,7 +22,7 @@ lol_ranks = {
 def sort_matches(target_player, elligible_players):
     scored_players = map(lambda p: compute_similarity(target_player, p), elligible_players)
     #filter out inelligible players
-    scored_players = [x for x in scored_players if x > 0]
+    scored_players = [x for x in scored_players if x['score'] > 0]
     scored_players.sort(key = lambda p: p['score'], reverse = True)
     return scored_players
 
