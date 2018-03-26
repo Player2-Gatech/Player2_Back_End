@@ -58,7 +58,7 @@ def compute_similarity(player_target, player_other):
             return player_other
 
     #add skill difference to score
-    skill_score += 1 - (skill_diff(target_tier, target_rank, other_tier, other_rank) / 2.0)
+    skill_score = 1 - (skill_diff(target_tier, target_rank, other_tier, other_rank) / 2.0)
     score += skill_score * skill_modifier
     #role preference
     role_score = league_game_role_target['partnerRole'] == league_game_role_other['role']
