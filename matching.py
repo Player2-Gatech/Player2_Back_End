@@ -64,7 +64,7 @@ def compute_similarity(player_target, player_other):
     role_score = league_game_role_target['partnerRole'] == league_game_role_other['role']
     score += role_score * role_modifier
     #likeability score
-    like_score = player_other['likes']
+    like_score = player_other['likes'] if player_other['likes'] else 0
     score += like_score * like_modifier
 
     player_other['score'] = score
