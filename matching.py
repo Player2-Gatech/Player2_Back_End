@@ -10,6 +10,14 @@ lol_tiers = {
         'master': 7,
         'challenger': 8
         }
+lol_ranks = {
+        'I' : 1,
+        'II' : 2,
+        'III' : 3,
+        'IV' : 4,
+        'V' : 5
+        }
+
 
 def sort_matches(target_player, elligible_players):
     scored_players = map(lambda p: compute_similarity(target_player, p), elligible_players)
@@ -25,15 +33,17 @@ def compute_similarity(player_target, player_other):
     role_modifier = .299
     like_modifier = .001
 
-    target_tier = lol_tiers[player_target['playerSkill']['tier'].lower()] 
-    other_tier = lol_tiers[player_other['playerSkill']['tier'].lower()] 
+    target_tier = lol_tiers[player_target['playerSkill'][0]['tier'].lower()]
+    other_tier = lol_tiers[player_other['playerSkill'][0]['tier'].lower()]
     tier_diff = abs(target_tier - other_tier)
 
-    target_rank = player_target['playerSkill']['rank']
-    other_rank = player_target['playerSkill']['rank']
+    target_rank = player_target['playerSkill'][0]['rank']
+    other_rank = player_target['playerSkill'][0]['rank']
 
     #filter out players with the same role
-    if player_target['playerGameRole']['role'] == player_other['playerGameRole']['role']:
+    league_game_role_target = [game for game in player_target['playerGameRole'] if game['gameTitle'] == "League of Legends"][0]
+    league_game_role_other = [game for game in player_other['playerGameRole'] if game['gameTitle'] == "League of Legends"][0]
+    if league_game_role_target['role'] == league_game_role_other['role']:
         player_other['score'] = 0
         return player_other
 
@@ -51,7 +61,7 @@ def compute_similarity(player_target, player_other):
     skill_score += 1 - (skill_diff(target_tier, target_rank, other_tier, other_rank) / 2.0)
     score += skill_score * skill_modifier
     #role preference
-    role_score = player_target['playerGameRole']['partnerRole'] == player_other['playerGameRoll']['role']
+    role_score = league_game_role_target['partnerRole'] == league_game_role_other['role']
     score += role_score * role_modifier
     #likeability score
     like_score = player_other['likes']
@@ -64,10 +74,10 @@ def skill_diff(this_tier, this_rank, other_tier, other_rank):
     if this_tier == '':
         this_rank = 5
     else:
-        this_rank = int(this_rank)
+        this_rank = lol_ranks[this_rank]
     if other_tier == '':
         other_rank = 5
     else:
-        other_rank = int(other_rank)
+        other_rank = lol_ranks[other_rank]
 
     return abs((this_tier + (1 - this_rank *.2)) - (other_tier + (1 - other_rank *.2)))
