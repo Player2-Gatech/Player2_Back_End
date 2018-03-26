@@ -226,7 +226,7 @@ class UserMatches(Resource):
         eligible_players = map(lambda p: p[0].as_dict(), all_players)
         top_matches = sort_matches(g.user.as_dict(), eligible_players)
         # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
-        return top_matches
+        return jsonify({'matches': top_matches})
 
 
 # Define resource-based routes here
