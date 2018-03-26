@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS tb_player(
     email         VARCHAR(128) UNIQUE NOT NULL,
     password      VARCHAR(128) NOT NULL,
     display_name  VARCHAR(128),
-    profile_photo bytea,
+    profile_photo VARCHAR NOT NULL,
     likes         INT DEFAULT 0,
     bio           VARCHAR(255)
 );

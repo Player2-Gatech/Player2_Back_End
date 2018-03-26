@@ -168,6 +168,8 @@ class UserSkill(Resource):
         # get win loss and recent win loss by role
         query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, account_id, riot_key))
         r = requests.get(query_string).json()
+        if 'matches' not in r.keys():
+            abort(500, 'No games found for this user!')
 
         wins = losses = role_wins = role_losses = 0
         champs = []
@@ -222,11 +224,11 @@ class UserMatches(Resource):
     def get(self):
         params = self.reqparse.parse_args()
         # retrieve other users who play the same game and call similarity function
-        all_players = session.query(Player, PlayerGame, Game).filter(Player.user_id != g.user.user_id and Player.user_id == PlayerGame.user_id).filter(PlayerGame.game_id == Game.game_id).filter(Game.title == params['gameTitle']).all()
+        all_players = session.query(Player, PlayerGame, Game).filter(Player.user_id != g.user.user_id).filter(Player.user_id == PlayerGame.user_id).filter(PlayerGame.game_id == Game.game_id).filter(Game.title == params['gameTitle']).all()
         eligible_players = map(lambda p: p[0].as_dict(), all_players)
         top_matches = sort_matches(g.user.as_dict(), eligible_players)
         # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
-        return top_matches
+        return jsonify({'matches': top_matches})
 
 
 # Define resource-based routes here

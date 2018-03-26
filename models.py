@@ -13,7 +13,7 @@ class Player(Base):
     email = Column('email', String(128))
     password = Column('password', String(128))
     display_name = Column('display_name', String(128))
-    profile_photo = Column('profile_photo', LargeBinary)
+    profile_photo = Column('profile_photo', String)
     likes = Column('likes', Integer)
     bio = Column('bio', String(255))
 
@@ -27,7 +27,7 @@ class Player(Base):
         return {
             'email' : self.email,
             'displayName' : self.display_name,
-            'profilePhoto' : self.profile_photo,
+            'profilePhoto' : str(self.profile_photo) if self.profile_photo else "",
             'likes' : self.likes,
             'bio' : self.bio,
             'playerGameRole' : map(lambda x: x.as_dict(), self.player_games),
