@@ -226,6 +226,7 @@ class UserMatches(Resource):
         # retrieve other users who play the same game and call similarity function
         all_players = session.query(Player, PlayerGame, Game).filter(Player.user_id != g.user.user_id).filter(Player.user_id == PlayerGame.user_id).filter(PlayerGame.game_id == Game.game_id).filter(Game.title == params['gameTitle']).all()
         eligible_players = map(lambda p: p[0].as_dict(), all_players)
+        eligible_players = [p for p in eligible_players if len(p['playerSkill']) > 0]
         top_matches = sort_matches(g.user.as_dict(), eligible_players)
         # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
         return jsonify({'matches': top_matches})
