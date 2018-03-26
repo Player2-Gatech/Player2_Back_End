@@ -27,7 +27,7 @@ class Player(Base):
         return {
             'email' : self.email,
             'displayName' : self.display_name,
-            'profilePhoto' : str(self.profile_photo),
+            'profilePhoto' : str(self.profile_photo) if self.profile_photo else "",
             'likes' : self.likes,
             'bio' : self.bio,
             'playerGameRole' : map(lambda x: x.as_dict(), self.player_games),
