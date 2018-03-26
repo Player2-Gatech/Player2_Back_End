@@ -168,6 +168,8 @@ class UserSkill(Resource):
         # get win loss and recent win loss by role
         query_string = str('%s/match/v3/matchlists/by-account/%s/recent?api_key=%s' % (base_url, account_id, riot_key))
         r = requests.get(query_string).json()
+        if 'matches' not in r.keys():
+            abort(500, 'No games found for this user!')
 
         wins = losses = role_wins = role_losses = 0
         champs = []
