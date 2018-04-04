@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS tb_player(
     email         VARCHAR(128) UNIQUE NOT NULL,
     password      VARCHAR(128) NOT NULL,
     display_name  VARCHAR(128),
-    profile_photo VARCHAR NOT NULL,
+    profile_photo VARCHAR,
     likes         INT DEFAULT 0,
     bio           VARCHAR(255)
 );
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS tb_player_skill (
 );
 
 /* Uncomment if the database is being created from scratch.
-
+*/
 INSERT INTO tb_game (title, ign_descriptor) VALUES('League of Legends', 'Summoner Name');
 
 INSERT INTO tb_game_role (game_id, role) VALUES('1', 'Bottom');
@@ -78,5 +78,3 @@ INSERT INTO tb_game (title, ign_descriptor) VALUES('World of Warcraft', 'Battle.
 INSERT INTO tb_game_role (game_id, role) VALUES('3', 'Tank');
 INSERT INTO tb_game_role (game_id, role) VALUES('3', 'Healer');
 INSERT INTO tb_game_role (game_id, role) VALUES('3', 'DPS');
-
-*/
