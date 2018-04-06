@@ -36,7 +36,7 @@ class Player(Base):
             'playerGameRole' : map(lambda x: x.as_dict(), self.player_games),
             'playerSkill' : map(lambda x: x.as_dict(), self.player_skill),
             'playerComments' : map(lambda x: x.as_dict(), self.player_comments),
-            'playerVideo' : self.player_video[0].as_dict() # only support one video upload right now
+            'playerVideo' : map(lambda x: x.as_dict(), self.player_video)
         }
 
     def hash_password(self, password):

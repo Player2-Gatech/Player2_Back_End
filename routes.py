@@ -295,6 +295,7 @@ class UserFriends(Resource):
     @auth.login_required
     def get(self):
         session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id or user_id_b == g.user.user_id).all()
+
         return g.user.player_friends
 
 
