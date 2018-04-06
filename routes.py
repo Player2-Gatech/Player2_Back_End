@@ -231,11 +231,81 @@ class UserMatches(Resource):
         # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
         return jsonify({'matches': top_matches})
 
+class UserComment(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('userId', required=True)
+        self.reqparse.add_argument('message', required=True)
+        #self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+
+    @auth.login_required
+    def post(self):
+        params = self.reqparse.parse_args()
+        commenter = g.user.display_name if g.user.display_name else "Anonymous"
+        user_id = params['userId']
+        message = params['message']
+
+        new_comment = PlayerComment(user_id, commenter, message)
+        session.add(new_comment)
+        session.commit()
+        return new_comment.as_dict()
+
+
+
+class UserVideo(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('videoUrl', required=True, type=str, location='json')
+
+    @auth.login_required
+    def put(self):
+        params = self.reqparse.parse_args()
+        user_id = g.user.user_id
+        current_video = session.query(PlayerVideo).filter_by(user_id = user_id).first()
+        if current_video:
+            current_video.video_url = params['videoUrl']
+        else:
+            current_video = PlayerVideo(user_id, params['videoUrl'])
+            session.add(current_video)
+        session.commit()
+        return current_video.as_dict()
+
+class UserPending(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        #self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+
+class UserFriends(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('matchUserId', required=True, type=str, location='json')
+        #self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+
+    @auth.login_required
+    def post(self):
+        params = self.reqparse.parse_args()
+        user_id_a = g.user.user_id
+        user_id_b = params['matchUserId']
+
+        new_friendship = PlayerFriend(user_id_a, user_id_b)
+        session.add(new_friendship)
+        session.commit()
+        return new_friendship.as_dict()
+
+    @auth.login_required
+    def get(self):
+        session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id or user_id_b == g.user.user_id).all()
+        return g.user.player_friends
+
 
 # Define resource-based routes here
 my_api.add_resource(User, '/api/player', endpoint = 'player')
 my_api.add_resource(Games, '/api/games', endpoint = 'games')
 my_api.add_resource(UserGame, '/api/playerGame', endpoint = 'playerGame')
+my_api.add_resource(UserComment, '/api/playerComment', endpoint = 'playerComment')
+my_api.add_resource(UserVideo, '/api/playerVideo', endpoint = 'playerVideo')
+my_api.add_resource(UserFriends, '/api/playerFriends', endpoint = 'playerFriends')
+my_api.add_resource(UserPending, '/api/playerPending', endpoint = 'playerPending')
 my_api.add_resource(UserSkill, '/api/playerSkill', endpoint = 'skill')
 my_api.add_resource(UserMatches, '/api/matches', endpoint = 'matches')
 

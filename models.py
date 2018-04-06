@@ -19,19 +19,24 @@ class Player(Base):
 
     player_games = relationship('PlayerGame')
     player_skill = relationship('PlayerSkill')
+    player_comments = relationship('PlayerComment')
+    player_video = relationship('PlayerVideo')
 
     def __init__(self, email):
         self.email = email
 
     def as_dict(self):
         return {
+            'user_id' : self.user_id,
             'email' : self.email,
             'displayName' : self.display_name,
             'profilePhoto' : str(self.profile_photo) if self.profile_photo else "",
             'likes' : self.likes,
             'bio' : self.bio,
             'playerGameRole' : map(lambda x: x.as_dict(), self.player_games),
-            'playerSkill' : map(lambda x: x.as_dict(), self.player_skill)
+            'playerSkill' : map(lambda x: x.as_dict(), self.player_skill),
+            'playerComments' : map(lambda x: x.as_dict(), self.player_comments),
+            'playerVideo' : self.player_video[0].as_dict() # only support one video upload right now
         }
 
     def hash_password(self, password):
@@ -155,7 +160,68 @@ class PlayerSkill(Base):
             'wins' : self.wins,
             'losses' : self.losses
         }
+class PlayerComment(Base):
+    __tablename__ = 'tb_comment'
+    comment_id = Column('comment_id', Integer, primary_key=True)
+    user_id = Column('user_id', Integer, ForeignKey("tb_player.user_id"))
+    commenter = Column('commenter', String(128))
+    message = Column('message', String(255))
+
+    def __init__(self, user_id, commenter, message):
+        self.user_id = user_id,
+        self.commenter = commenter,
+        self.message = message
+
+    def as_dict(self):
+        return {
+            'user_id' : self.user_id,
+            'commenter' : self.commenter,
+            'message' : self.message
+        }
+
+class PlayerVideo(Base):
+    __tablename__ = 'tb_player_video'
+    video_id = Column('video_id', Integer, primary_key=True)
+    user_id = Column('user_id', Integer, ForeignKey("tb_player.user_id"))
+    video_url = Column('video_url', String)
+
+    def __init__(self, user_id, video_url):
+        self.user_id = user_id,
+        self.video_url = video_url
 
 
+    def as_dict(self):
+        return {
+            'user_id' : self.user_id,
+            'video_url' : self.video_url
+        }
+
+class PlayerPending(Base):
+    __tablename__ = 'tb_player_pending'
+    pending_user_id = Column('pending_user_id', Integer, primary_key=True)
+    user_id_from = Column('user_id_from', Integer, ForeignKey("tb_player.user_id"))
+    user_id_to = Column('user_id_to', Integer, ForeignKey("tb_player.user_id"))
+
+    def as_dict(self):
+        return {
+            'user_id_from' : self.user_id,
+            'user_id_to' : self.user_id
+        }
+
+class PlayerFriend(Base):
+    __tablename__ = 'tb_player_friend'
+    friend_user_id = Column('friend_user_id', Integer, primary_key=True)
+    user_id_a = Column('user_id_a', Integer, ForeignKey("tb_player.user_id"))
+    user_id_b = Column('user_id_b', Integer, ForeignKey("tb_player.user_id"))
+
+    def __init__(self, user_id_a, user_id_b):
+        self.user_id_a = user_id_a,
+        self.user_id_b = user_id_b
+
+    def as_dict(self):
+        return {
+            'user_id_a' : self.user_id_a,
+            'user_id_b' : self.user_id_b
+        }
 
 
