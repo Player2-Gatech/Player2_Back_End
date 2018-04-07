@@ -276,6 +276,7 @@ class UserFriends(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('matchUserId', required=True, type=int, location='json')
         self.reqparse.add_argument('pending', required=True, type=bool, location='json')
+        self.reqparse.add_argument('delete', required=False, type=bool, location='json')
 
     @auth.login_required
     def put(self):
@@ -287,8 +288,17 @@ class UserFriends(Resource):
         if params['matchUserId'] == g.user.user_id:
             abort(400, 'The matchingUserId is the same as the authenticated user id!')
         # Adding a non-pending request should either update the table or add the bidirectional edge
+        if params['delete'] is not None:
+            current_friendship = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, user_id_b = params['matchUserId']).first()
+            if current_friendship:
+                session.delete(current_friendship)
+                session.commit()
+                return "Deleted friendship"
+            else:
+                abort(400, 'Friendship to delete does not exist.')
+
         if not params['pending']:
-            current_friendship = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id).first()
+            current_friendship = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, user_id_b = params['matchUserId']).first()
             if current_friendship:
                 current_friendship.pending = False
             user_id_a = g.user.user_id
