@@ -236,7 +236,7 @@ class UserComment(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('userId', required=True)
         self.reqparse.add_argument('message', required=True)
-        #self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+        self.reqparse.add_argument('rating', required=True)
 
     @auth.login_required
     def post(self):
@@ -244,8 +244,9 @@ class UserComment(Resource):
         commenter = g.user.display_name if g.user.display_name else "Anonymous"
         user_id = params['userId']
         message = params['message']
+        rating = params['rating']
 
-        new_comment = PlayerComment(user_id, commenter, message)
+        new_comment = PlayerComment(user_id, commenter, message, rating)
         session.add(new_comment)
         session.commit()
         return new_comment.as_dict()

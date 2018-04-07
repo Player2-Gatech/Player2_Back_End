@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS tb_comment(
     comment_id    SERIAL PRIMARY KEY,
     user_id       INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
     commenter     VARCHAR(128) NOT NULL,
-    message       VARCHAR(255) NOT NULL
+    message       VARCHAR(255) NOT NULL,
+    rating        INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tb_player_skill (

@@ -166,17 +166,20 @@ class PlayerComment(Base):
     user_id = Column('user_id', Integer, ForeignKey("tb_player.user_id"))
     commenter = Column('commenter', String(128))
     message = Column('message', String(255))
+    rating = Column('rating', Integer)
 
-    def __init__(self, user_id, commenter, message):
+    def __init__(self, user_id, commenter, message, rating):
         self.user_id = user_id,
         self.commenter = commenter,
-        self.message = message
+        self.message = message,
+        self.rating = rating
 
     def as_dict(self):
         return {
             'user_id' : self.user_id,
             'commenter' : self.commenter,
-            'message' : self.message
+            'message' : self.message,
+            'rating' : rating
         }
 
 class PlayerVideo(Base):
