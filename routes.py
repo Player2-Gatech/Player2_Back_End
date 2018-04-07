@@ -270,33 +270,46 @@ class UserVideo(Resource):
         session.commit()
         return current_video.as_dict()
 
-class UserPending(Resource):
-    def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        #self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
-
 class UserFriends(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('matchUserId', required=True, type=str, location='json')
-        #self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+        self.reqparse.add_argument('matchUserId', required=True, type=int, location='json')
+        self.reqparse.add_argument('pending', required=True, type=bool, location='json')
 
     @auth.login_required
-    def post(self):
+    def put(self):
         params = self.reqparse.parse_args()
-        user_id_a = g.user.user_id
-        user_id_b = params['matchUserId']
+        user_id_a = None
+        user_id_b = None
+        new_friendship = None
 
-        new_friendship = PlayerFriend(user_id_a, user_id_b)
+        if params['matchUserId'] == g.user.user_id:
+            abort(400, 'The matchingUserId is the same as the authenticated user id!')
+        # Adding a non-pending request should either update the table or add the bidirectional edge
+        if not params['pending']:
+            current_friendship = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id).first()
+            if current_friendship:
+                current_friendship.pending = False
+            user_id_a = g.user.user_id
+            user_id_b = params['matchUserId']
+            new_friendship = PlayerFriend(user_id_a, user_id_b, False)
+        else:
+            user_id_a = params['matchUserId']
+            user_id_b = g.user.user_id
+            new_friendship = PlayerFriend(user_id_a, user_id_b, True)
         session.add(new_friendship)
         session.commit()
         return new_friendship.as_dict()
 
     @auth.login_required
     def get(self):
-        session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id or user_id_b == g.user.user_id).all()
+        player_friends = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, pending = False).all()
+        player_friends = map(lambda x: x.as_dict(), player_friends)
 
-        return g.user.player_friends
+        pending_friends = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, pending = True).all()
+        pending_friends = map(lambda x: x.as_dict(), pending_friends)
+
+        return jsonify({"friends" : player_friends, "pending" : pending_friends})
 
 
 # Define resource-based routes here
@@ -306,7 +319,6 @@ my_api.add_resource(UserGame, '/api/playerGame', endpoint = 'playerGame')
 my_api.add_resource(UserComment, '/api/playerComment', endpoint = 'playerComment')
 my_api.add_resource(UserVideo, '/api/playerVideo', endpoint = 'playerVideo')
 my_api.add_resource(UserFriends, '/api/playerFriends', endpoint = 'playerFriends')
-my_api.add_resource(UserPending, '/api/playerPending', endpoint = 'playerPending')
 my_api.add_resource(UserSkill, '/api/playerSkill', endpoint = 'skill')
 my_api.add_resource(UserMatches, '/api/matches', endpoint = 'matches')
 

@@ -56,16 +56,11 @@ CREATE TABLE IF NOT EXISTS tb_player_video (
   video_url VARCHAR NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS tb_player_pending (
-  pending_user_id  SERIAL PRIMARY KEY,
-  user_id_from   INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
-  user_id_to     INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS tb_player_friend (
-  friend_user_id SERIAL PRIMARY KEY,
   user_id_a   INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
-  user_id_b   INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL
+  user_id_b   INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
+  pending     BOOLEAN NOT NULL,
+  PRIMARY KEY (user_id_a, user_id_b)
 );
 
 /* Uncomment if the database is being created from scratch.

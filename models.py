@@ -196,32 +196,23 @@ class PlayerVideo(Base):
             'video_url' : self.video_url
         }
 
-class PlayerPending(Base):
-    __tablename__ = 'tb_player_pending'
-    pending_user_id = Column('pending_user_id', Integer, primary_key=True)
-    user_id_from = Column('user_id_from', Integer, ForeignKey("tb_player.user_id"))
-    user_id_to = Column('user_id_to', Integer, ForeignKey("tb_player.user_id"))
-
-    def as_dict(self):
-        return {
-            'user_id_from' : self.user_id,
-            'user_id_to' : self.user_id
-        }
-
 class PlayerFriend(Base):
     __tablename__ = 'tb_player_friend'
-    friend_user_id = Column('friend_user_id', Integer, primary_key=True)
-    user_id_a = Column('user_id_a', Integer, ForeignKey("tb_player.user_id"))
-    user_id_b = Column('user_id_b', Integer, ForeignKey("tb_player.user_id"))
+    user_id_a = Column('user_id_a', Integer, ForeignKey("tb_player.user_id"), primary_key=True)
+    user_id_b = Column('user_id_b', Integer, ForeignKey("tb_player.user_id"), primary_key=True)
+    pending = Column('pending', Boolean)
 
-    def __init__(self, user_id_a, user_id_b):
+    friend_profile = relationship('Player', foreign_keys='PlayerFriend.user_id_b')
+
+    def __init__(self, user_id_a, user_id_b, pending):
         self.user_id_a = user_id_a,
-        self.user_id_b = user_id_b
+        self.user_id_b = user_id_b,
+        self.pending = pending
 
     def as_dict(self):
         return {
-            'user_id_a' : self.user_id_a,
-            'user_id_b' : self.user_id_b
+            'friendProfile' : self.friend_profile.as_dict(),
+            'pending' : self.pending
         }
 
 
