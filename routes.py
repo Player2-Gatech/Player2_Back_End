@@ -177,7 +177,10 @@ class UserSkill(Resource):
             game_id = game['gameId']
             query_string = str('%s/match/v3/matches/%s?api_key=%s' % (base_url, game_id, riot_key))
             game_data = requests.get(query_string).json()
-            participant_id = [p['participantId'] for p in game_data['participantIdentities'] if p['player']['accountId'] == account_id][0]
+            try:
+                participant_id = [p['participantId'] for p in game_data['participantIdentities'] if p['player']['accountId'] == account_id][0]
+            except:
+                abort(500, 'No games found for this user!')
             result = game_data['participants'][participant_id - 1]['stats']['win']
             game_role = game['lane'].lower()
             role = role.lower()
