@@ -179,7 +179,7 @@ class PlayerComment(Base):
             'user_id' : self.user_id,
             'commenter' : self.commenter,
             'message' : self.message,
-            'rating' : rating
+            'rating' : self.rating
         }
 
 class PlayerVideo(Base):
