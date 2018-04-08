@@ -214,7 +214,8 @@ class PlayerFriend(Base):
 
     def as_dict(self):
         return {
-            'friendId' : self.user_id_b,
+            'idA' : self.user_id_a,
+            'idB' : self.user_id_b,
             'friendProfile' : self.friend_profile.as_dict(),
             'pending' : self.pending
         }

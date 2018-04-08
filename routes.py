@@ -226,7 +226,9 @@ class UserMatches(Resource):
         # retrieve other users who play the same game and call similarity function
         all_players = session.query(Player, PlayerGame, Game).filter(Player.user_id != g.user.user_id).filter(Player.user_id == PlayerGame.user_id).filter(PlayerGame.game_id == Game.game_id).filter(Game.title == params['gameTitle']).all()
         player_friends = session.query(PlayerFriend).filter(PlayerFriend.user_id_a == g.user.user_id or PlayerFriend.user_id_b == g.user.user_id).all()
-        player_friends = list(map(lambda p: p.as_dict()['friendId'], player_friends))
+        player_friendsA = list(map(lambda p: p.as_dict()['idA'], player_friendsA))
+        player_friendsB = list(map(lambda p: p.as_dict()['idB'], player_friendsB))
+        player_friends = player_friendsA + player_friendsB
 
         eligible_players = map(lambda p: p[0].as_dict(), all_players)
         eligible_players = [p for p in eligible_players if len(p['playerSkill']) > 0 and p['user_id'] not in player_friends]
