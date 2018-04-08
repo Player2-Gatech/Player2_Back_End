@@ -307,8 +307,8 @@ class UserFriends(Resource):
             current_friendship = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, user_id_b = params['matchUserId']).first()
             if current_friendship:
                 current_friendship.pending = False
-            user_id_a = g.user.user_id
-            user_id_b = params['matchUserId']
+            user_id_a = params['matchUserId']
+            user_id_b = g.user.user_id
             new_friendship = PlayerFriend(user_id_a, user_id_b, False)
         else:
             user_id_a = params['matchUserId']
