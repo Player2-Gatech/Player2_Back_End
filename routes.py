@@ -282,6 +282,7 @@ class UserFriends(Resource):
         self.reqparse.add_argument('matchUserId', required=True, type=int, location='json')
         self.reqparse.add_argument('pending', required=True, type=bool, location='json')
         self.reqparse.add_argument('delete', required=False, type=bool, location='json')
+        self.reqparse.add_argument('retUpdated', required=False, type=bool, location='json')
 
     @auth.login_required
     def put(self):
@@ -293,7 +294,7 @@ class UserFriends(Resource):
         if params['matchUserId'] == g.user.user_id:
             abort(400, 'The matchingUserId is the same as the authenticated user id!')
         # Adding a non-pending request should either update the table or add the bidirectional edge
-        if params['delete'] is not None:
+        if params['delete']:
             current_friendship = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, user_id_b = params['matchUserId']).first()
             if current_friendship:
                 session.delete(current_friendship)
@@ -315,7 +316,17 @@ class UserFriends(Resource):
             new_friendship = PlayerFriend(user_id_a, user_id_b, True)
         session.add(new_friendship)
         session.commit()
-        return new_friendship.as_dict()
+
+        if params['retUpdated']:
+            player_friends = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, pending = False).all()
+            player_friends = map(lambda x: x.as_dict(), player_friends)
+
+            pending_friends = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, pending = True).all()
+            pending_friends = map(lambda x: x.as_dict(), pending_friends)
+
+            return jsonify({"friends" : player_friends, "pending" : pending_friends})
+        else:
+            return new_friendship.as_dict()
 
     @auth.login_required
     def get(self):
