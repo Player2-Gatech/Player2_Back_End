@@ -317,8 +317,10 @@ class UserFriends(Resource):
             user_id_a = params['matchUserId']
             user_id_b = g.user.user_id
             new_friendship = PlayerFriend(user_id_a, user_id_b, True)
-        session.add(new_friendship)
-        session.commit()
+        # prevent key constraint error
+        if not session.query(PlayerFriend).filter_by(user_id_a = new_friendship.user_id_a, user_id_b = new_friendship.user_id_b).first():
+            session.add(new_friendship)
+            session.commit()
 
         if params['retUpdated']:
             player_friends = session.query(PlayerFriend).filter_by(user_id_a = g.user.user_id, pending = False).all()
