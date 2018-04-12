@@ -75,10 +75,10 @@ def compute_similarity(player_target, player_other):
     role_score = league_game_role_target['partnerRole'] == league_game_role_other['role']
     score += role_score * role_modifier
     #likeability score - compute average rating from comments
-    avg_rating = 3.5
+    avg_rating = 0.7
     if len(player_other['playerComments']) != 0:
         avg_rating = np.mean([comment['rating'] for comment in player_other['playerComments']])
-    score += avg_rating * comment_modifier
+    score += (avg_rating / 5) * comment_modifier
 
     player_other['score'] = score
     return player_other
