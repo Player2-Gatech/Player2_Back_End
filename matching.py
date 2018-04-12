@@ -1,4 +1,4 @@
-import random
+import numpy as np
 
 lol_tiers = {
         'unranked': 0,
@@ -18,6 +18,19 @@ lol_ranks = {
         'V' : 5
         }
 
+skill_modifier = .6
+role_modifier = .2
+comment_modifier = .1
+restrict_ranks = True
+
+# set to request params if they are not null
+def init_alg(_skill_modifier, _role_modifier, _comment_modifier, _restrict_ranks):
+    global skill_modifier, role_modifier, comment_modifier, restrict_ranks
+    skill_modifier = _skill_modifier if _skill_modifier else skill_modifier
+    role_modifier = _role_modifier if _role_modifier else role_modifier
+    comment_modifier = _comment_modifier if _comment_modifier else comment_modifier
+    restrict_ranks = _restrict_ranks if _restrict_ranks else restrict_ranks
+
 
 def sort_matches(target_player, elligible_players):
     scored_players = map(lambda p: compute_similarity(target_player, p), elligible_players)
@@ -29,9 +42,6 @@ def sort_matches(target_player, elligible_players):
 # player_other will have an additional field called 'score' post method-call
 def compute_similarity(player_target, player_other):
     score = 0
-    skill_modifier = .7
-    role_modifier = .299
-    like_modifier = .001
 
     target_tier = lol_tiers[player_target['playerSkill'][0]['tier'].lower()]
     other_tier = lol_tiers[player_other['playerSkill'][0]['tier'].lower()]
@@ -48,14 +58,15 @@ def compute_similarity(player_target, player_other):
         return player_other
 
     #filter out players who are unable to queue together
-    if target_tier < 5:
-        if tier_diff > 1:
-            player_other['score'] = 0
-            return player_other
-    if target_tier > 4:
-        if skill_diff(target_tier, target_rank, other_tier, other_rank) > .75:
-            player_other['score'] = 0
-            return player_other
+    if restrict_ranks:
+        if target_tier < 5:
+            if tier_diff > 1:
+                player_other['score'] = 0
+                return player_other
+        if target_tier > 4:
+            if skill_diff(target_tier, target_rank, other_tier, other_rank) > .75:
+                player_other['score'] = 0
+                return player_other
 
     #add skill difference to score
     skill_score = 1 - (skill_diff(target_tier, target_rank, other_tier, other_rank) / 2.0)
@@ -63,9 +74,11 @@ def compute_similarity(player_target, player_other):
     #role preference
     role_score = league_game_role_target['partnerRole'] == league_game_role_other['role']
     score += role_score * role_modifier
-    #likeability score
-    like_score = player_other['likes'] if player_other['likes'] else 0
-    score += like_score * like_modifier
+    #likeability score - compute average rating from comments
+    avg_rating = 3.5
+    if len(player_other['playerComments']) != 0:
+        avg_rating = np.mean([comment['rating'] for comment in player_other['playerComments']])
+    score += avg_rating * comment_modifier
 
     player_other['score'] = score
     return player_other
