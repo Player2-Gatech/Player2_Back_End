@@ -220,4 +220,27 @@ class PlayerFriend(Base):
             'pending' : self.pending
         }
 
+class Chat(Base):
+    __tablename__ = 'tb_chat'
+    chat_id = Column('chat_id', Integer, primary_key=True)
+    room_name = Column('room_name', String)
+    sender_id = Column('sender_id', Integer, ForeignKey("tb_player.user_id"))
+    text = Column('text', String)
+    created_at = Column('created_at', String)
 
+    def __init__(self, room_name, sender_id, text, created_at):
+        self.room_name = room_name,
+        self.sender_id = sender_id,
+        self.text = text,
+        self.created_at = created_at
+
+
+    def as_dict(self):
+        return {
+            '_id' : chat_id,
+            'text': text,
+            'created_at': created_at,
+            'user': {
+                '_id': sender_id,
+            }
+        }
