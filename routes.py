@@ -370,10 +370,10 @@ class Chats(Resource):
         created_at = post_params['createdAt']
 
         try:
-            new_chat = PlayerGame(roomName, sender_id, text, created_at)
+            new_chat = Chat(roomName, sender_id, text, created_at)
             session.add(new_chat)
             session.commit()
-            return jsonify({'Chat': new_player_game.as_dict()})
+            return 
         except Exception as e:
             session.rollback()
             # Should not be able to get here

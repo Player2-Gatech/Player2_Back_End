@@ -237,10 +237,10 @@ class Chat(Base):
 
     def as_dict(self):
         return {
-            '_id' : chat_id,
-            'text': text,
-            'created_at': created_at,
+            '_id' : self.chat_id,
+            'text': self.text,
+            'createdAt': self.created_at,
             'user': {
-                '_id': sender_id,
+                '_id': self.sender_id,
             }
         }
