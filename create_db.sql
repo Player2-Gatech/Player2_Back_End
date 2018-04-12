@@ -64,6 +64,14 @@ CREATE TABLE IF NOT EXISTS tb_player_friend (
   PRIMARY KEY (user_id_a, user_id_b)
 );
 
+CREATE TABLE IF NOT EXISTS tb_chat (
+  chat_id     SERIAL PRIMARY KEY,
+  room_name   VARCHAR(256) NOT NULL,
+  sender_id   INTEGER NOT NULL REFERENCES tb_player(user_id) NOT NULL,
+  text        VARCHAR(255) NOT NULL,
+  created_at  VARCHAR(255) NOT NULL
+);
+
 /* Uncomment if the database is being created from scratch.
 INSERT INTO tb_game (title, ign_descriptor) VALUES('League of Legends', 'Summoner Name');
 
