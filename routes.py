@@ -265,10 +265,8 @@ class UserComment(Resource):
         session.add(new_comment)
         session.commit()
 
-        player_comments = session.query(PlayerComment).filter_by(user_id = user_id).all()
-        return map(lambda x: x.as_dict(), player_comments)
-
-
+        player = session.query(Player).filter_by(user_id = user_id).first()
+        return player.as_dict()
 
 class UserVideo(Resource):
     def __init__(self):
@@ -374,7 +372,7 @@ class Chats(Resource):
             new_chat = Chat(roomName, sender_id, text, created_at)
             session.add(new_chat)
             session.commit()
-            return 
+            return
         except Exception as e:
             session.rollback()
             # Should not be able to get here
