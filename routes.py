@@ -7,7 +7,7 @@ from flask_restful import Resource, Api, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
 from config import app, session, port_num, riot_key
 from werkzeug.exceptions import Unauthorized
-from matching import sort_matches
+from matching import init_alg, sort_matches
 
 auth = HTTPBasicAuth()
 my_api = Api(app)
@@ -222,6 +222,10 @@ class UserMatches(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('gameTitle',required=True, type=str, location='args')
+        self.reqparse.add_argument('skillModifier',required=False, type=float, location='args')
+        self.reqparse.add_argument('roleModifier',required=False, type=float, location='args')
+        self.reqparse.add_argument('commentModifier',required=False, type=float, location='args')
+        self.reqparse.add_argument('restrictRanks',required=False, type=bool, location='args')
 
     @auth.login_required
     def get(self):
@@ -235,6 +239,8 @@ class UserMatches(Resource):
 
         eligible_players = map(lambda p: p[0].as_dict(), all_players)
         eligible_players = [p for p in eligible_players if len(p['playerSkill']) > 0 and p['user_id'] not in player_friends]
+
+        init_alg(params['skillModifier'], params['roleModifier'], params['commentModifier'], params['restrictRanks'])
         top_matches = sort_matches(g.user.as_dict(), eligible_players)
         # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
         return jsonify({'matches': top_matches})
