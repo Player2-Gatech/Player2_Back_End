@@ -29,7 +29,7 @@ def init_alg(_skill_modifier, _role_modifier, _comment_modifier, _restrict_ranks
     skill_modifier = _skill_modifier if _skill_modifier else skill_modifier
     role_modifier = _role_modifier if _role_modifier else role_modifier
     comment_modifier = _comment_modifier if _comment_modifier else comment_modifier
-    restrict_ranks = _restrict_ranks if _restrict_ranks else restrict_ranks
+    restrict_ranks = _restrict_ranks
 
 
 def sort_matches(target_player, elligible_players):

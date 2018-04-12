@@ -225,7 +225,7 @@ class UserMatches(Resource):
         self.reqparse.add_argument('skillModifier',required=False, type=float, location='args')
         self.reqparse.add_argument('roleModifier',required=False, type=float, location='args')
         self.reqparse.add_argument('commentModifier',required=False, type=float, location='args')
-        self.reqparse.add_argument('restrictRanks',required=False, type=bool, location='args')
+        self.reqparse.add_argument('restrictRanks',required=False, type=int, location='args')
 
     @auth.login_required
     def get(self):
@@ -243,6 +243,7 @@ class UserMatches(Resource):
         init_alg(params['skillModifier'], params['roleModifier'], params['commentModifier'], params['restrictRanks'])
         top_matches = sort_matches(g.user.as_dict(), eligible_players)
         # these matches are a sorted list of players with an additional 'score' field, representing the strength of the matching
+        print 'number of matches : ' + str(len(top_matches))
         return jsonify({'matches': top_matches})
 
 class UserComment(Resource):
