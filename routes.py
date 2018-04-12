@@ -349,29 +349,30 @@ class UserFriends(Resource):
 
         return jsonify({"friends" : player_friends, "pending" : pending_friends})
 
-class Chat(Resource):
+class Chats(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('roomName', required=True, type=str, location='args')
 
-        self.reqparse.add_argument('text', required=True, type=str, location='json')
-        self.reqparse.add_argument('createdAt', required=True, type=str, location='json')
+        self.post_reqparse = reqparse.RequestParser()
+        self.post_reqparse.add_argument('text', required=False, type=str, location='json')
+        self.post_reqparse.add_argument('createdAt', required=False, type=str, location='json')
 
     @auth.login_required
-    def put(self):
+    def post(self):
         params = self.reqparse.parse_args()
-        room_name = params['roomName']
+        post_params = self.post_reqparse.parse_args()
+        roomName = params['roomName']
         sender_id = g.user.user_id
-        text = params['text']
-        created_at = params['createdAt']
+        text = post_params['text']
+        created_at = post_params['createdAt']
 
         try:
-            new_chat = PlayerGame(room_name, sender_id, text, created_at)
+            new_chat = PlayerGame(roomName, sender_id, text, created_at)
             session.add(new_chat)
             session.commit()
             return jsonify({'Chat': new_player_game.as_dict()})
         except Exception as e:
-            print e
             session.rollback()
             # Should not be able to get here
             abort(400, "Something went wrong")
@@ -394,7 +395,7 @@ my_api.add_resource(UserVideo, '/api/playerVideo', endpoint = 'playerVideo')
 my_api.add_resource(UserFriends, '/api/playerFriends', endpoint = 'playerFriends')
 my_api.add_resource(UserSkill, '/api/playerSkill', endpoint = 'skill')
 my_api.add_resource(UserMatches, '/api/matches', endpoint = 'matches')
-my_api.add_resource(Chat, '/api/chat', endpoint = 'chat')
+my_api.add_resource(Chats, '/api/chat', endpoint = 'chat')
 
 # Methods for authenticating via tokens
 @auth.verify_password
