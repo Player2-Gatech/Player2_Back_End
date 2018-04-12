@@ -263,7 +263,9 @@ class UserComment(Resource):
         new_comment = PlayerComment(user_id, commenter, message, rating)
         session.add(new_comment)
         session.commit()
-        return new_comment.as_dict()
+
+        player_comments = session.query(PlayerComment).filter_by(user_id = user_id).all()
+        return map(lambda x: x.as_dict(), player_comments)
 
 
 
